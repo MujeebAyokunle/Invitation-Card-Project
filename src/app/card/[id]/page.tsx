@@ -14,7 +14,7 @@ interface CardPreviewProps {
 
 function Card({ type, guestName = "Your Name", eventTitle = "Your Event" }: CardPreviewProps) {
 
-    const cardUrl = `https://localhost:3000/card/1234`;
+    const cardUrl = `https://invitation-card-project.vercel.app/card/1234`;
 
     const cardRef = useRef(null);
 
