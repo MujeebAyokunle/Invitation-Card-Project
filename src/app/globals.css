@@ -1,26 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Montserrat:wght@300;400;500;600&display=swap');
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Cream/Beige Base */
+    --background: 36 47% 97%;
+    --foreground: 30 25% 20%;
+
+    /* Card - slightly warmer cream */
+    --card: 38 50% 96%;
+    --card-foreground: 30 25% 20%;
+
+    /* Popover */
+    --popover: 38 50% 96%;
+    --popover-foreground: 30 25% 20%;
+
+    /* Primary - Burnt Orange */
+    --primary: 18 70% 47%;
+    --primary-foreground: 38 50% 96%;
+
+    /* Secondary - Light Gold */
+    --secondary: 43 45% 88%;
+    --secondary-foreground: 35 35% 30%;
+
+    /* Muted - Soft cream */
+    --muted: 38 30% 92%;
+    --muted-foreground: 30 15% 50%;
+
+    /* Accent - Gold */
+    --accent: 43 55% 58%;
+    --accent-foreground: 30 25% 15%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders - Gold tinted */
+    --border: 40 35% 82%;
+    --input: 40 35% 85%;
+    --ring: 43 55% 58%;
+
+    --radius: 0.5rem;
+
+    /* Custom event colors */
+    --gold: 43 55% 58%;
+    --gold-light: 43 50% 75%;
+    --gold-dark: 35 45% 45%;
+    --burnt-orange: 18 70% 47%;
+    --burnt-orange-light: 18 60% 60%;
+    --cream: 38 50% 96%;
+    --cream-dark: 36 40% 90%;
+
+    /* Sidebar */
+    --sidebar-background: 36 47% 97%;
+    --sidebar-foreground: 30 25% 20%;
+    --sidebar-primary: 18 70% 47%;
+    --sidebar-primary-foreground: 38 50% 96%;
+    --sidebar-accent: 43 45% 88%;
+    --sidebar-accent-foreground: 35 35% 30%;
+    --sidebar-border: 40 35% 82%;
+    --sidebar-ring: 43 55% 58%;
+  }
+
+  .dark {
+    --background: 30 20% 10%;
+    --foreground: 38 50% 96%;
+
+    --card: 30 20% 12%;
+    --card-foreground: 38 50% 96%;
+
+    --popover: 30 20% 12%;
+    --popover-foreground: 38 50% 96%;
+
+    --primary: 18 70% 50%;
+    --primary-foreground: 30 20% 10%;
+
+    --secondary: 35 30% 20%;
+    --secondary-foreground: 38 50% 96%;
+
+    --muted: 30 15% 18%;
+    --muted-foreground: 38 30% 65%;
+
+    --accent: 43 55% 50%;
+    --accent-foreground: 30 20% 10%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 20% 20%;
+    --input: 30 20% 20%;
+    --ring: 43 55% 50%;
+
+    --gold: 43 55% 50%;
+    --gold-light: 43 45% 40%;
+    --gold-dark: 35 40% 35%;
+    --burnt-orange: 18 70% 50%;
+    --burnt-orange-light: 18 55% 55%;
+    --cream: 38 40% 20%;
+    --cream-dark: 36 35% 15%;
+
+    --sidebar-background: 30 20% 10%;
+    --sidebar-foreground: 38 50% 96%;
+    --sidebar-primary: 18 70% 50%;
+    --sidebar-primary-foreground: 30 20% 10%;
+    --sidebar-accent: 35 30% 20%;
+    --sidebar-accent-foreground: 38 50% 96%;
+    --sidebar-border: 30 20% 20%;
+    --sidebar-ring: 43 55% 50%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
 }
