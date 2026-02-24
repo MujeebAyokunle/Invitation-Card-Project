@@ -44,7 +44,7 @@ const Scanner = () => {
     const { toast } = useToast();
 
     const { data: event } = useEvent();
-    const { data: stats, refetch: refetchStats } = useCheckInStats(event?.id);
+    const { data: stats, refetch: refetchStats } = useCheckInStats("event?.id");
     const createCheckIn = useCreateCheckIn();
 
     useEffect(() => {
