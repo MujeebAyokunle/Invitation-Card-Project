@@ -35,20 +35,20 @@ const SettingsPage = () => {
     const { user, loading: authLoading } = useAuth();
     const { isAdmin, isLoading: isAdminLoading } = useIsAdmin(user?.id);
     const { data: event, isLoading: eventLoading } = useEvent();
-    const { data: categories = [] } = useCategories(event?.id);
+    const { data: categories = [] } = useCategories("event?.id");
 
     // Auth redirect handled by ProtectedRoute
 
     useEffect(() => {
-        if (event) {
-            setName(event.name || "");
-            setHonoree(event.honoree || "");
-            setDate(event.date || "");
-            setTime(event.time || "");
-            setVenue(event.venue || "");
-            setDressCode(event.dress_code || "");
-            setColors(event.colors || "");
-        }
+        // if (event) {
+        //     setName(event.name || "");
+        //     setHonoree(event.honoree || "");
+        //     setDate(event.date || "");
+        //     setTime(event.time || "");
+        //     setVenue(event.venue || "");
+        //     setDressCode(event.dress_code || "");
+        //     setColors(event.colors || "");
+        // }
     }, [event]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -68,7 +68,7 @@ const SettingsPage = () => {
                     dress_code: dressCode.trim() || null,
                     colors: colors.trim() || null,
                 })
-                .eq("id", event.id);
+                .eq("id", "event.id");
 
             if (error) throw error;
 
@@ -201,7 +201,7 @@ const SettingsPage = () => {
                     <CategoryManagementDialog
                         open={categoryDialogOpen}
                         onOpenChange={setCategoryDialogOpen}
-                        eventId={event.id}
+                        eventId={"event.id"}
                     />
                 </>
             )}
