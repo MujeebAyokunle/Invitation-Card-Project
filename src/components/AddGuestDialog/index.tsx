@@ -25,26 +25,21 @@ import { Loader2 } from "lucide-react";
 interface AddGuestDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    eventId: string;
+    events?: any[]
+    onSuccess?: () => void;
 }
 
-export const AddGuestDialog = ({ open, onOpenChange, eventId }: AddGuestDialogProps) => {
+export const AddGuestDialog = ({ open, onOpenChange, events, onSuccess }: AddGuestDialogProps) => {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
-    const [category, setCategory] = useState("Regular");
-
+    const [event, setEvent] = useState("");
+    const [category, setCategory] = useState("");
+    const { data: categories = [], refetch: refetchCategories } = useCategories(event);
     const createGuest = useCreateGuest();
-    const { data: event } = useEvent();
-    const { data: categories = [] } = useCategories(eventId);
-    const { toast } = useToast();
+    // const { data: events } = useEvent();
 
-    // Reset to first category if current selection doesn't exist
-    useEffect(() => {
-        // if (categories.length > 0 && !categories.find(c => c.name === category)) {
-        //     setCategory(categories[0].name);
-        // }
-    }, [categories, category]);
+    const { toast } = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,18 +53,24 @@ export const AddGuestDialog = ({ open, onOpenChange, eventId }: AddGuestDialogPr
             return;
         }
 
+        const accessToken = Array.from({ length: 7 }, () =>
+            String.fromCharCode(65 + Math.floor(Math.random() * 26))
+        ).join("");
+
         try {
             await createGuest.mutateAsync({
-                event_id: eventId,
+                event_id: event,
                 name: name.trim(),
                 phone: phone.trim() || null,
                 email: email.trim() || null,
+                access_token: accessToken,
                 category,
             });
 
             toast({
                 title: "Guest added",
                 description: `${name} has been added to the guest list.`,
+                variant: "success",
             });
 
             // Reset form
@@ -78,6 +79,7 @@ export const AddGuestDialog = ({ open, onOpenChange, eventId }: AddGuestDialogPr
             setEmail("");
             // setCategory(categories[0]?.name || "Regular");
             onOpenChange(false);
+            onSuccess?.();
         } catch (error) {
             toast({
                 title: "Error",
@@ -98,6 +100,25 @@ export const AddGuestDialog = ({ open, onOpenChange, eventId }: AddGuestDialogPr
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="event">Event</Label>
+                            <Select value={event} onValueChange={(value) => {
+                                setEvent(value);
+                                refetchCategories();
+                            }}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select event" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-amber-100" >
+                                    {events?.map((e) => (
+                                        <SelectItem key={e.id} value={e.id}>
+                                            {e.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="name">Guest Name *</Label>
                             <Input
@@ -134,13 +155,13 @@ export const AddGuestDialog = ({ open, onOpenChange, eventId }: AddGuestDialogPr
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
-                                {/* <SelectContent>
+                                <SelectContent className="z-50 bg-amber-100" >
                                     {categories.map((cat) => (
                                         <SelectItem key={cat.id} value={cat.name}>
                                             {cat.name}
                                         </SelectItem>
                                     ))}
-                                </SelectContent> */}
+                                </SelectContent>
                             </Select>
                         </div>
                     </div>

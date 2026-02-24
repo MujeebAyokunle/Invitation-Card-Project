@@ -20,17 +20,18 @@ export const useEvent = () => {
             const { data, error } = await supabase
                 .from("events")
                 .select("*")
-                .limit(1)
-                .maybeSingle();
+            // .limit(1)
+            // .maybeSingle();
 
             if (error) throw error;
-            return data as Event | null;
+            return data as Event[] | null;
         },
     });
 };
 
 // Fetch all guests for an event
 export const useGuests = (eventId: string | undefined) => {
+    if (!eventId) return useQuery({ queryKey: ["guests", eventId], queryFn: async () => [] });
     return useQuery({
         queryKey: ["guests", eventId],
         queryFn: async () => {
@@ -56,34 +57,32 @@ export const useGuestByToken = (token: string | undefined) => {
         queryFn: async () => {
             if (!token) return null;
 
-            // Use the secure RPC function that excludes sensitive PII (phone, email)
             const { data, error } = await supabase
-                .rpc("get_guest_by_token", { _access_token: token });
+                .from("guests")
+                .select(`
+        id,
+        event_id,
+        name,
+        category,
+        access_token,
+        created_at,
+        events (
+          id,
+          name,
+          date,
+          time,
+          venue,
+          honoree,
+          dress_code,
+          colors
+        )
+      `)
+                .eq("access_token", token)
+                .maybeSingle();
 
             if (error) throw error;
-
-            // Transform the flat RPC result into the expected nested structure
-            if (!data || data.length === 0) return null;
-
-            const row = data[0];
-            return {
-                id: row.id,
-                event_id: row.event_id,
-                name: row.name,
-                category: row.category,
-                access_token: row.access_token,
-                created_at: row.created_at,
-                events: {
-                    id: row.event_id,
-                    name: row.event_name,
-                    date: row.event_date,
-                    time: row.event_time,
-                    venue: row.event_venue,
-                    honoree: row.event_honoree,
-                    dress_code: row.event_dress_code,
-                    colors: row.event_colors,
-                } as Event,
-            } as Pick<Guest, 'id' | 'event_id' | 'name' | 'category' | 'access_token' | 'created_at'> & { events: Event };
+            console.log({ data })
+            return data ?? null;
         },
         enabled: !!token,
     });
@@ -113,7 +112,7 @@ export const useCreateGuest = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (guest: { event_id: string; name: string; phone?: string | null; email?: string | null; category: string }) => {
+        mutationFn: async (guest: { event_id: string; name: string; phone?: string | null; email?: string | null; category: string, access_token: string }) => {
             const { data, error } = await supabase
                 .from("guests")
                 .insert(guest as any) // Cast to any since category is now text in DB but types still show enum
@@ -218,6 +217,7 @@ export const useGuestCheckInStatus = (guestId: string | undefined) => {
 
 // Get check-in stats
 export const useCheckInStats = (eventId: string | undefined) => {
+    if (!eventId) return useQuery({ queryKey: ["check_in_stats", eventId], queryFn: async () => ({ total: 0, checkedIn: 0, vip: 0, pending: 0 }) });
     return useQuery({
         queryKey: ["check_in_stats", eventId],
         queryFn: async () => {

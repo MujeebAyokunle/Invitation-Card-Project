@@ -20,9 +20,9 @@ export const AccessCard = ({
     qrCodeValue,
     className,
     dressCode,
-    eventName = "80th Birthday Celebration",
-    eventDate = "7 March 2026",
-    venue = "Maha Event Center, Abuja",
+    eventName = "",
+    eventDate = "",
+    venue = "",
     accessCode,
 }: AccessCardProps) => {
     // Default color mappings for common categories

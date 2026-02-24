@@ -59,24 +59,7 @@ export const AddOperatorDialog = ({ open, onOpenChange, onSuccess }: AddOperator
         }
 
         setIsLoading(true);
-        try {
-
-            const { user, error: authError }: any = await supabase.auth.admin.createUser({
-                email: email.trim(),
-                password,
-                email_confirm: true, // optional: automatically confirm user
-                // optional: you can also set user_metadata
-                user_metadata: { displayName: displayName.trim() || email.split("@")[0], role }
-            })
-
-            if (authError) {
-                toast({
-                    title: "Error",
-                    description: "Error creating user.",
-                    variant: "destructive",
-                });
-                return
-            }
+        try {            
 
             // Use edge function to create operator (bypasses signup restrictions)
             const { data, error } = await supabase.functions.invoke("create-operator", {

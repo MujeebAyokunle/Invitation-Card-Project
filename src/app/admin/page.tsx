@@ -10,7 +10,16 @@ import FloralCorner from "@/components/FloralCorner";
 import AddGuestDialog from "@/components/AddGuestDialog";
 import CSVImportDialog from "@/components/CSVImportDialog";
 import AddOperatorDialog from "@/components/AddOperatorDialog";
+import moment from "moment";
+import { Label } from "@/components/ui/label";
 import ResetPasswordDialog from "@/components/ResetPasswordDialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import SettingsDialog from "@/components/SettingsDialog";
 import {
     Users,
@@ -27,7 +36,8 @@ import {
     LogOut,
     Loader2,
     Trash2,
-    KeyRound
+    KeyRound,
+    Calendar
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEvent, useGuests, useCheckInStats, useCheckIns, useDeleteGuest } from "@/hooks/useGuests";
@@ -37,14 +47,17 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from 'next/navigation'
 import Link from "next/link";
+import { CreateEventDialog } from "@/components/CreateEventDialog";
 
 const AdminDashboard = () => {
     const [searchTerm, setSearchTerm] = useState("");
+    const [event, setEvent] = useState("");
     const [selectedTab, setSelectedTab] = useState("overview");
     const [showAddGuest, setShowAddGuest] = useState(false);
     const [showCSVImport, setShowCSVImport] = useState(false);
     const [showAddOperator, setShowAddOperator] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showCreateEvent, setShowCreateEvent] = useState(false);
     const [showResetPassword, setShowResetPassword] = useState(false);
     const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
     const [togglingOperator, setTogglingOperator] = useState<string | null>(null);
@@ -52,11 +65,12 @@ const AdminDashboard = () => {
     const { user, loading: authLoading, signOut } = useAuth();
     const { toast } = useToast();
 
-    const { data: event, isLoading: eventLoading } = useEvent();
-    const { data: guests = [], isLoading: guestsLoading } = useGuests(event?.id);
-    const { data: stats, isLoading: statsLoading } = useCheckInStats(event?.id);
-    const { data: checkIns = [] } = useCheckIns(event?.id);
+    const { data: events, isLoading: eventLoading, refetch: refetchEvents } = useEvent();
+    const { data: guests = [], isLoading: guestsLoading, refetch: refetchGuests } = useGuests(event);
+    const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useCheckInStats(event);
+    const { data: checkIns = [] } = useCheckIns(event);
     const { data: operators = [], refetch: refetchOperators } = useOperators();
+
     const { isAdmin, isLoading: isAdminLoading } = useIsAdmin(user?.id);
     const deleteGuest = useDeleteGuest();
 
@@ -68,7 +82,15 @@ const AdminDashboard = () => {
             navigate.push("/login");
         }
 
-    }, [user, authLoading, navigate]); 
+    }, [user, authLoading, navigate]);
+
+    useEffect(() => {
+        if (events && events.length > 0 && !event) {
+            setEvent(events[0].id);
+            refetchGuests();
+            refetchStats();
+        }
+    }, [events, events?.length]);
 
     const filteredGuests = guests.filter(guest =>
         guest.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -120,19 +142,23 @@ const AdminDashboard = () => {
         if (!event) return;
         if (!confirm(`Are you sure you want to delete ${guestName}?`)) return;
 
-        // try {
-        //     await deleteGuest.mutateAsync({ id: guestId, eventId: event.id });
-        //     toast({
-        //         title: "Guest deleted",
-        //         description: `${guestName} has been removed.`,
-        //     });
-        // } catch (error) {
-        //     toast({
-        //         title: "Error",
-        //         description: "Failed to delete guest.",
-        //         variant: "destructive",
-        //     });
-        // }
+        try {
+            await deleteGuest.mutateAsync({ id: guestId, eventId: event });
+            toast({
+                title: "Guest deleted",
+                description: `${guestName} has been removed.`,
+                variant: "success",
+            });
+
+            refetchGuests()
+            refetchStats()
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to delete guest.",
+                variant: "destructive",
+            });
+        }
     };
 
     const handleToggleOperator = async (operator: Operator, enabled: boolean) => {
@@ -240,14 +266,14 @@ const AdminDashboard = () => {
                                     });
                                     return;
                                 }
-                                if (!isAdmin) {
-                                    toast({
-                                        title: "Admin only",
-                                        description: "You don't have permission to add guests.",
-                                        variant: "destructive",
-                                    });
-                                    return;
-                                }
+                                // if (!isAdmin) {
+                                //     toast({
+                                //         title: "Admin only",
+                                //         description: "You don't have permission to add guests.",
+                                //         variant: "destructive",
+                                //     });
+                                //     return;
+                                // }
                                 setShowAddGuest(true);
                             }}
                         >
@@ -258,13 +284,32 @@ const AdminDashboard = () => {
                 </header>
 
                 {/* Stats Cards */}
+                <div className="space-y-2 mb-4 outline-none focus:outline-none">
+                    {/* <Label htmlFor="event">Event</Label> */}
+                    <Select value={event} onValueChange={(value) => {
+                        setEvent(value);
+                        refetchGuests()
+                        refetchStats()
+                    }}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select event" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-amber-100" >
+                            {events?.map((e) => (
+                                <SelectItem key={e.id} value={e.id}>
+                                    {e.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
                     <Card className="border-border">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-[hsl(30_15%_50%)] uppercase tracking-wide">Total Guests</p>
-                                    <p className="text-2xl font-display font-bold text-[hsl(30_25%_20%)]">{0}</p>
+                                    <p className="text-2xl font-display font-bold text-[hsl(30_25%_20%)]">{stats?.total || 0}</p>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-[hsl(43_45%_88%)] flex items-center justify-center">
                                     <Users className="w-5 h-5 text-[hsl(35_45%_45%)]" />
@@ -278,7 +323,7 @@ const AdminDashboard = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Checked In</p>
-                                    <p className="text-2xl font-display font-bold text-[hsl(18_70%_47%)]">{0}</p>
+                                    <p className="text-2xl font-display font-bold text-[hsl(18_70%_47%)]">{stats?.checkedIn || 0}</p>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-[hsl(18_70%_47%)]/10 flex items-center justify-center">
                                     <CheckCircle2 className="w-5 h-5 text-[hsl(18_70%_47%)]" />
@@ -292,7 +337,7 @@ const AdminDashboard = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-muted-foreground uppercase tracking-wide">VIP Guests</p>
-                                    <p className="text-2xl font-display font-bold text-[hsl(35_45%_45%)]">{0}</p>
+                                    <p className="text-2xl font-display font-bold text-[hsl(35_45%_45%)]">{stats?.vip || 0}</p>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
                                     <BarChart3 className="w-5 h-5 text-[hsl(35_45%_45%)]" />
@@ -306,7 +351,7 @@ const AdminDashboard = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Pending</p>
-                                    <p className="text-2xl font-display font-bold text-muted-foreground">{0}</p>
+                                    <p className="text-2xl font-display font-bold text-muted-foreground">{stats?.pending || 0}</p>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                                     <Clock className="w-5 h-5 text-muted-foreground" />
@@ -318,8 +363,9 @@ const AdminDashboard = () => {
 
                 {/* Main Content Tabs */}
                 <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-                    <TabsList className="grid w-full grid-cols-3 mb-6">
+                    <TabsList className="grid w-full grid-cols-4 mb-6">
                         <TabsTrigger value="overview">Guest List</TabsTrigger>
+                        <TabsTrigger value="events">Events</TabsTrigger>
                         <TabsTrigger value="operators">Operators</TabsTrigger>
                         <TabsTrigger value="reports">Reports</TabsTrigger>
                     </TabsList>
@@ -364,73 +410,162 @@ const AdminDashboard = () => {
                                         </thead>
                                         <tbody>
                                             {
-                                                // guestsLoading ? (
-                                                //     <tr>
-                                                //         <td colSpan={5} className="p-8 text-center">
-                                                //             <Loader2 className="w-6 h-6 mx-auto text-gold animate-spin" />
-                                                //         </td>
-                                                //     </tr>
-                                                // ) : 
-                                                filteredGuests.length === 0 ? (
+                                                guestsLoading ? (
                                                     <tr>
-                                                        <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                                                            {searchTerm ? "No guests match your search" : "No guests added yet"}
+                                                        <td colSpan={5} className="p-8 text-center">
+                                                            <Loader2 className="w-6 h-6 mx-auto text-gold animate-spin" />
                                                         </td>
                                                     </tr>
-                                                ) : filteredGuests.map((guest: any) => (
-                                                    <tr key={guest.id} className="border-t border-border hover:bg-muted/30 transition-colors">
-                                                        <td className="p-4">
-                                                            <p className="font-medium text-[hsl(30_25%_20%)]">{guest.name}</p>
-                                                            <p className="text-xs text-muted-foreground sm:hidden">{guest.phone}</p>
-                                                        </td>
-                                                        <td className="p-4">
-                                                            <Badge variant={guest.category === "VIP" ? "default" : "secondary"} className={
-                                                                guest.category === "VIP" ? "bg-burnt-orange text-[hsl(38_50%_96%)]" :
-                                                                    guest.category === "Family" ? "bg-[hsl(18_70%_47%)] text-[hsl(38_50%_96%)]" :
-                                                                        "bg-[hsl(43_45%_88%)] text-[hsl(35_35%_30%)]"
-                                                            }>
-                                                                {guest.category}
-                                                            </Badge>
-                                                        </td>
-                                                        <td className="p-4 hidden sm:table-cell">
-                                                            <p className="text-sm text-[hsl(30_25%_20%)]">{guest.phone}</p>
-                                                            <p className="text-xs text-muted-foreground">{guest.email}</p>
-                                                        </td>
-                                                        <td className="p-4">
-                                                            {
-                                                                checkedInGuestIds.has(guest.id) ? (
-                                                                    <div className="flex items-center gap-1 text-[hsl(18_70%_47%)]">
-                                                                        <CheckCircle2 className="w-4 h-4" />
-                                                                        <span className="text-xs">Checked In</span>
-                                                                    </div>
-                                                                ) : (
-                                                                    <span className="text-xs text-muted-foreground">Not checked in</span>
-                                                                )}
-                                                        </td>
-                                                        <td className="p-4">
-                                                            <div className="flex items-center gap-2">
-                                                                <Link href={`/card/${guest.access_token}`} target="_blank">
-                                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                                        <QrCode className="w-4 h-4" />
-                                                                    </Button>
-                                                                </Link>
-                                                                {true && (
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        className="h-8 w-8 text-destructive hover:text-destructive"
-                                                                        onClick={() => handleDeleteGuest(guest.id, guest.name)}
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4" />
-                                                                    </Button>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                ) :
+                                                    filteredGuests.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                                                                {searchTerm ? "No guests match your search" : "No guests added yet"}
+                                                            </td>
+                                                        </tr>
+                                                    ) : filteredGuests.map((guest: any) => (
+                                                        <tr key={guest.id} className="border-t border-border hover:bg-muted/30 transition-colors">
+                                                            <td className="p-4">
+                                                                <p className="font-medium text-[hsl(30_25%_20%)]">{guest.name}</p>
+                                                                <p className="text-xs text-muted-foreground sm:hidden">{guest.phone}</p>
+                                                            </td>
+                                                            <td className="p-4">
+                                                                <Badge variant={guest.category === "VIP" ? "default" : "secondary"} className={
+                                                                    guest.category === "VIP" ? "bg-burnt-orange text-[hsl(38_50%_96%)]" :
+                                                                        guest.category === "Family" ? "bg-[hsl(18_70%_47%)] text-[hsl(38_50%_96%)]" :
+                                                                            "bg-[hsl(43_45%_88%)] text-[hsl(35_35%_30%)]"
+                                                                }>
+                                                                    {guest.category}
+                                                                </Badge>
+                                                            </td>
+                                                            <td className="p-4 hidden sm:table-cell">
+                                                                <p className="text-sm text-[hsl(30_25%_20%)]">{guest.phone}</p>
+                                                                <p className="text-xs text-muted-foreground">{guest.email}</p>
+                                                            </td>
+                                                            <td className="p-4">
+                                                                {
+                                                                    checkedInGuestIds.has(guest.id) ? (
+                                                                        <div className="flex items-center gap-1 text-[hsl(18_70%_47%)]">
+                                                                            <CheckCircle2 className="w-4 h-4" />
+                                                                            <span className="text-xs">Checked In</span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="text-xs text-muted-foreground">Not checked in</span>
+                                                                    )}
+                                                            </td>
+                                                            <td className="p-4">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Link href={`/card/${guest.access_token}`} target="_blank">
+                                                                        <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer">
+                                                                            <QrCode className="w-4 h-4" />
+                                                                        </Button>
+                                                                    </Link>
+                                                                    {true && (
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
+                                                                            onClick={() => handleDeleteGuest(guest.id, guest.name)}
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
                                         </tbody>
                                     </table>
                                 </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="events" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Events</CardTitle>
+                                <CardDescription>Manage events and their associated QR codes</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {
+                                    events && events.length === 0 ? (
+                                        <div className="text-center py-8 text-muted-foreground">
+                                            <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                            <p>No events added yet</p>
+                                            <Button
+                                                className="mt-4 bg-[hsl(18_70%_47%)] hover:bg-[hsl(18_70%_47%)]/90"
+                                                onClick={() => setShowCreateEvent(true)}
+                                            >
+                                                <Calendar className="w-4 h-4 mr-2" />
+                                                Add Event
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="flex justify-end">
+                                                <Button
+                                                    size="sm"
+                                                    className="bg-[hsl(18_70%_47%)] hover:bg-[hsl(18_70%_47%)]/90"
+                                                    onClick={() => setShowCreateEvent(true)}
+                                                >
+                                                    <Calendar className="w-4 h-4 mr-2" />
+                                                    Add Event
+                                                </Button>
+                                            </div>
+                                            <div className="border rounded-lg overflow-hidden">
+                                                <table className="w-full">
+                                                    <thead className="bg-muted/50">
+                                                        <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                                                            <th className="p-4">Name</th>
+                                                            <th className="p-4">Venue</th>
+                                                            <th className="p-4">Dress code</th>
+                                                            <th className="p-4">Honoree</th>
+                                                            <th className="p-4">Colors</th>
+                                                            <th className="p-4">Date</th>
+                                                            <th className="p-4">Enabled categories</th>
+                                                            <th className="p-4">Created on</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {
+                                                            events && events.map((op) => {
+                                                                return (
+                                                                    <tr key={op.id} className="border-t border-border hover:bg-muted/30">
+                                                                        <td className="p-4 font-medium">{op.name || "Unknown"}</td>
+                                                                        <td className="p-4 font-medium">
+                                                                            {op.venue}
+                                                                        </td>
+                                                                        <td className="p-4 font-medium">
+                                                                            {op.dress_code}
+                                                                        </td>
+                                                                        <td className="p-4 font-medium">
+                                                                            {op.honoree}
+                                                                        </td>
+                                                                        <td className="p-4 font-medium">
+                                                                            {op.colors}
+                                                                        </td>
+                                                                        <td className="p-4 font-medium">
+                                                                            {moment(
+                                                                                `${op.date} ${op.time}`,
+                                                                                "YYYY-MM-DD HH:mm:ss"
+                                                                            ).format("ddd, MMM Do YYYY [at] h:mm A")}
+                                                                        </td>
+                                                                        <td className="p-4 font-medium">
+                                                                            {op.enabled_categories}
+                                                                        </td>
+                                                                        <td className="p-4 text-sm text-muted-foreground">
+                                                                            {new Date(op.created_at).toLocaleDateString()}
+                                                                        </td>
+                                                                    </tr>
+                                                                )
+                                                            })
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -563,31 +698,45 @@ const AdminDashboard = () => {
             </div>
 
             {/* Add Guest Dialog */}
-            {event && (
+            {events && events.length > 0 && (
                 <>
                     <AddGuestDialog
                         open={showAddGuest}
                         onOpenChange={setShowAddGuest}
-                        eventId={"1"}
+                        events={events}
+                        onSuccess={() => {
+                            refetchGuests();
+                        }}
                     />
                     <CSVImportDialog
                         open={showCSVImport}
                         onOpenChange={setShowCSVImport}
-                        eventId={"event.id"}
+                        eventId={events[0].id}
                     />
                     <SettingsDialog
                         open={showSettings}
                         onOpenChange={setShowSettings}
-                        event={{ id: "1", name: "Sample Event", venue: "Sample Venue, City" } as any}
+                        event={{ id: events[0].id, name: events[0].name, venue: events[0].venue } as any}
                     />
                 </>
             )}
 
             {/* Add Operator Dialog */}
+            <CreateEventDialog
+                open={showCreateEvent}
+                onOpenChange={setShowCreateEvent}
+                onSuccess={() => {
+                    refetchEvents();
+                }}
+            />
+
+            {/* Add Operator Dialog */}
             <AddOperatorDialog
                 open={showAddOperator}
                 onOpenChange={setShowAddOperator}
-                onSuccess={() => null}
+                onSuccess={() => {
+                    refetchOperators();
+                }}
             />
 
             {/* Reset Password Dialog */}

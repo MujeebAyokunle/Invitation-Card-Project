@@ -17,7 +17,8 @@ export const useUserRole = (userId: string | undefined) => {
                 .maybeSingle();
 
             if (error) throw error;
-            return data?.role as AppRole | null;
+            // return data?.role as AppRole | null;
+             return (data?.role ?? null) as AppRole | null; 
         },
         enabled: !!userId,
     });

@@ -12,6 +12,7 @@ export interface Category {
 }
 
 export const useCategories = (eventId: string | undefined) => {
+    if (!eventId) return useQuery({ queryKey: ["categories", eventId], queryFn: async () => [] });
     return useQuery({
         queryKey: ["categories", eventId],
         queryFn: async () => {

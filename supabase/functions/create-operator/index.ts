@@ -9,10 +9,17 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 console.log("Create Operator Function Started!")
 
 // Global CORS headers
+// const corsHeaders = {
+//   "Access-Control-Allow-Origin": "*", // change to your frontend in production
+//   "Access-Control-Allow-Methods": "POST, OPTIONS",
+//   "Access-Control-Allow-Headers": "Content-Type, Authorization",
+//   "Content-Type": "application/json",
+// }
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // change to your frontend in production
+  "Access-Control-Allow-Origin": "*", // change in production
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Content-Type": "application/json",
 }
 
@@ -59,7 +66,7 @@ Deno.serve(async (req: Request) => {
     // Insert into user_roles
     const { data, error } = await supabase
       .from("user_roles")
-      .insert([{ app_role: displayName, role }])
+      .insert([{ display_name: displayName, role }])
       .select()
 
     if (error) {
