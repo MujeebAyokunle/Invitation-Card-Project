@@ -183,26 +183,28 @@ const Scanner = () => {
     const playSound = (type: "success" | "error") => {
         // Create audio context for feedback sounds
         try {
-            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+            if (typeof window !== "undefined") {
+                const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
 
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
 
-            if (type === "success") {
-                oscillator.frequency.value = 800;
-                gainNode.gain.value = 0.3;
-            } else {
-                oscillator.frequency.value = 300;
-                gainNode.gain.value = 0.2;
+                if (type === "success") {
+                    oscillator.frequency.value = 800;
+                    gainNode.gain.value = 0.3;
+                } else {
+                    oscillator.frequency.value = 300;
+                    gainNode.gain.value = 0.2;
+                }
+
+                oscillator.start();
+                setTimeout(() => {
+                    oscillator.stop();
+                    audioContext.close();
+                }, 150);
             }
-
-            oscillator.start();
-            setTimeout(() => {
-                oscillator.stop();
-                audioContext.close();
-            }, 150);
         } catch (err) {
             // Audio not supported, ignore
         }

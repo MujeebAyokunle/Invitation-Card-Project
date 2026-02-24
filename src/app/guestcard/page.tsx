@@ -27,14 +27,14 @@ const GuestCardPage = () => {
                 await navigator.share({
                     title: guestData ? `${guestData.events.name} - Access Card` : "Event Access Card",
                     text: guestData ? `Access card for ${guestData.name}` : "My event access card",
-                    url: window.location.href,
+                    url: typeof window !== "undefined" ? window.location.href : "",
                 });
             } catch (err) {
                 console.log("Share cancelled or failed");
             }
         } else {
             // Fallback: copy link to clipboard
-            navigator.clipboard.writeText(window.location.href);
+            navigator.clipboard.writeText(typeof window !== "undefined" ? window.location.href : "");
             toast({
                 title: "Link copied",
                 description: "Card link has been copied to clipboard.",
@@ -44,11 +44,12 @@ const GuestCardPage = () => {
 
     const handleWhatsAppShare = () => {
         const text = guestData
-            ? `🎉 ${guestData.events.name}\n\nHi ${guestData.name},\n\nHere's your access card for the event:\n${window.location.href}\n\n📍 ${guestData.events.venue}\n📅 ${new Date(guestData.events.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}\n⏰ ${guestData.events.time}`
-            : `Here's your event access card: ${window.location.href}`;
+            ? `🎉 ${guestData.events.name}\n\nHi ${guestData.name},\n\nHere's your access card for the event:\n${typeof window !== "undefined" ? window.location.href : ""}\n\n📍 ${guestData.events.venue}\n📅 ${new Date(guestData.events.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}\n⏰ ${guestData.events.time}`
+            : `Here's your event access card: ${typeof window !== "undefined" ? window.location.href : ""}`;
 
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        window.open(whatsappUrl, "_blank");
+        if (typeof window !== "undefined")
+            window.open(whatsappUrl, "_blank");
     };
 
     const handleSaveAsPng = async () => {
@@ -63,7 +64,7 @@ const GuestCardPage = () => {
             const resetClass = "png-export-reset";
             node.classList.add(resetClass);
 
-            const scale = Math.min(4, Math.max(2, Math.round((window.devicePixelRatio || 1) * 2)));
+            const scale = Math.min(4, Math.max(2, Math.round((typeof window !== "undefined" ? window.devicePixelRatio : 1) * 2)));
             const width = node.offsetWidth * scale;
             const height = node.offsetHeight * scale;
 
@@ -145,7 +146,7 @@ const GuestCardPage = () => {
                     <AccessCard
                         guestName={guestData.name}
                         guestCategory={guestData.category}
-                        qrCodeValue={window.location.href}
+                        qrCodeValue={typeof window !== "undefined" ? window.location.href : ""}
                         accessCode={accessCode}
                         dressCode={guestData.events.dress_code || undefined}
                     />

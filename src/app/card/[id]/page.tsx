@@ -208,7 +208,7 @@ const GuestCardPage = () => {
     const accessCode = guestData?.access_token?.slice(0, 8) || "";
 
     const handleShare = async () => {
-        if (navigator.share) {
+        if (navigator.share && typeof window !== "undefined") {
             try {
                 await navigator.share({
                     title: guestData ? `${guestData.events.name} - Access Card` : "Event Access Card",
@@ -219,12 +219,14 @@ const GuestCardPage = () => {
                 console.log("Share cancelled or failed");
             }
         } else {
-            // Fallback: copy link to clipboard
-            navigator.clipboard.writeText(window.location.href);
-            toast({
-                title: "Link copied",
-                description: "Card link has been copied to clipboard.",
-            });
+            if (typeof window !== "undefined") {
+                // Fallback: copy link to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                toast({
+                    title: "Link copied",
+                    description: "Card link has been copied to clipboard.",
+                });
+            }
         }
     };
 
@@ -241,7 +243,7 @@ This is a momentous occasion, and we would be deeply honored to have you share i
 
 Kindly confirm your attendance using the RSVP link below:
 
-${window.location.href}
+${typeof window !== "undefined" ? window.location.href : ""}
 
 Please find your formal e-invitation attached with full event details.
 
@@ -250,7 +252,8 @@ Warm regards,
 *The Innih Family*`;
 
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        window.open(whatsappUrl, "_blank");
+        if (typeof window !== "undefined")
+            window.open(whatsappUrl, "_blank");
     };
 
     const handleSaveAsPng = async () => {
@@ -265,7 +268,7 @@ Warm regards,
             const resetClass = "png-export-reset";
             node.classList.add(resetClass);
 
-            const scale = Math.min(4, Math.max(2, Math.round((window.devicePixelRatio || 1) * 2)));
+            const scale = Math.min(4, Math.max(2, Math.round((typeof window !== "undefined" ? window.devicePixelRatio : 1) * 2)));
             const width = node.offsetWidth * scale;
             const height = node.offsetHeight * scale;
 
@@ -351,7 +354,7 @@ Warm regards,
                     <AccessCard
                         guestName={guestData.name}
                         guestCategory={guestData.category}
-                        qrCodeValue={window.location.href}
+                        qrCodeValue={typeof window !== "undefined" ? window.location.href : ""}
                         accessCode={accessCode}
                         venue={guestData.events.venue}
                         eventName={guestData.events.name}
