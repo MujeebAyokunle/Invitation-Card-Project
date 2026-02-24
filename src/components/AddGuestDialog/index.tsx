@@ -80,10 +80,10 @@ export const AddGuestDialog = ({ open, onOpenChange, events, onSuccess }: AddGue
             // setCategory(categories[0]?.name || "Regular");
             onOpenChange(false);
             onSuccess?.();
-        } catch (error) {
+        } catch (error: any) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to add guest. Please try again.",
+                description: error.message ? error.message : "Failed to add guest. Please try again.",
                 variant: "destructive",
             });
         }

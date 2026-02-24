@@ -59,7 +59,7 @@ export const AddOperatorDialog = ({ open, onOpenChange, onSuccess }: AddOperator
         }
 
         setIsLoading(true);
-        try {            
+        try {
 
             // Use edge function to create operator (bypasses signup restrictions)
             const { data, error } = await supabase.functions.invoke("create-operator", {
@@ -86,11 +86,11 @@ export const AddOperatorDialog = ({ open, onOpenChange, onSuccess }: AddOperator
             setRole("scanner");
             onSuccess();
             onOpenChange(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Add operator error:", error);
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to add operator.",
+                description: error?.message || "Failed to add operator.",
                 variant: "destructive",
             });
         } finally {

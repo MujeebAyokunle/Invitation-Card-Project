@@ -77,11 +77,11 @@ export const ResetPasswordDialog = ({ open, onOpenChange, operator }: ResetPassw
 
             setNewPassword("");
             onOpenChange(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Reset password error:", error);
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to reset password.",
+                description: error.message || "Failed to reset password.",
                 variant: "destructive",
             });
         } finally {

@@ -89,15 +89,13 @@ export const CreateEventDialog = ({
             onSuccess();
             onOpenChange(false);
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
 
             toast({
                 title: "Error",
                 description:
-                    error instanceof Error
-                        ? error.message
-                        : "Failed to create event.",
+                    error?.message || "Failed to create event.",
                 variant: "destructive",
             });
         } finally {

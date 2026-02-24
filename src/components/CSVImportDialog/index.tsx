@@ -90,8 +90,8 @@ export const CSVImportDialog = ({ open, onOpenChange, eventId }: CSVImportDialog
                     return;
                 }
                 setParsedGuests(guests);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed to parse CSV");
+            } catch (err: any) {
+                setError(err.message || "Failed to parse CSV");
             }
         };
         reader.readAsText(file);
@@ -125,10 +125,10 @@ export const CSVImportDialog = ({ open, onOpenChange, eventId }: CSVImportDialog
             queryClient.invalidateQueries({ queryKey: ["check_in_stats", eventId] });
             onOpenChange(false);
             setParsedGuests([]);
-        } catch (err) {
+        } catch (err: any) {
             toast({
                 title: "Import failed",
-                description: err instanceof Error ? err.message : "Failed to import guests",
+                description: err.message || "Failed to import guests",
                 variant: "destructive",
             });
         } finally {

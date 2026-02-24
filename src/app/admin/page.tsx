@@ -185,10 +185,10 @@ const AdminDashboard = () => {
                 description: `${operator.display_name || "Operator"} has been ${enabled ? "enabled" : "disabled"}.`,
             });
             refetchOperators();
-        } catch (error) {
+        } catch (error: any) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to toggle operator.",
+                description: error.message ? error.message : "Failed to toggle operator.",
                 variant: "destructive",
             });
         } finally {

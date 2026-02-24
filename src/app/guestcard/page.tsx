@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useRef, useState } from "react";
 // import { useParams, Link } from "react-router-dom";
 import domtoimage from "dom-to-image-more";
